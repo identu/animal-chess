@@ -13,64 +13,67 @@ class chessman:
 class ChessBoard(QWidget):
     buttons=[]  #存储按钮对象
     status=[]
+    animals=['象','狮','虎','豹','狗','狼','猫','鼠']
+    levels=[9,8,7,6,5,4,3,2]
+    relation=zip(animals,levels)
     selectedButton=None
-    grid = QGridLayout()
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Animal Chess')
         self.setGeometry(100, 100, 600, 600)
         self.setWindowIcon(QIcon('icon.png'))
 
+        grid = QGridLayout()
+        self.setLayout(grid)
 
-        self.setLayout(self.grid)
-
-        for i in range(9):  #9行
+        for j in range(7):  #7行
             self.buttons.append([])  #存储所有按钮（用按钮表示格子（棋子））
-            self.status.append([10,10,10,10,10,10,10])  #表示格子的状态，没有棋子的格子状态为10
+            self.status.append([10,10,10,10,10,10,10,10,10,10])  #表示格子的状态，没有棋子的格子状态为10
 
-            for j in range(7):  #7列
+            for i in range(9):  #9列
                 button = QPushButton()
                 button.setMinimumSize(75, 75)
 
                 if i>=3 and i<6 and j>=1 and j<=5 and j!=3 :
-                    button.setStyleSheet('background-color: blue;font-size:40px')
+                    button.setStyleSheet('background-color: cornflowerblue;font-size:40px')
                 else:
-                    if i==0 and j==3 or i==8 and j==3:
-                        button.setStyleSheet('font-size:40px')#'background-color: yellow;font-size:40px')
-                    else:
-                        button.setStyleSheet('background-color: #82e571;font-size:40px')#'background-color: #82e571;font-size:40px')
-                self.grid.addWidget(button, i, j)
-                self.buttons[i].append(button)
+                    button.setStyleSheet('background-color: #82e571;font-size:40px')#'background-color: #82e571;font-size:40px')
+                grid.addWidget(button, j, i)
+                self.buttons[j].append(button)
                 button.clicked.connect(self.buttonClicked)
-#                print(self.getButtonPosition(button))
 
     def setChessMan(self): #摆棋子
         name=['狮','井','井','虎','狗','井','猫','鼠','豹','狼','象']  #象狮虎豹狗狼猫鼠98765432 进入陷阱的棋子为1
         order=[8, 0, 0, 7, 4, 0, 3, 2, 6, 5, 9]  #井0 空10
-        for i in range(0,21,2):
-            self.buttons[int(i/7)][i%7].setText(name[int(i/2)])
-            self.buttons[int(i/7)][i%7].setStyleSheet("background-color: #82e571;font-size:40px;color:blue")
-            self.status[int(i/7)][i%7]=order[int(i/2)]
+        for i in range(0,21,1):
+            if i%2==0:
+                self.buttons[i%7][int(i/7)].setText(name[int(i/2)])
+                self.status[i%7][int(i/7)]=order[int(i/2)]
+            self.buttons[i%7][int(i/7)].setStyleSheet("background-color: #82e571;font-size:40px;color:blue")
+        self.buttons[3][0].setText('穴')
         order1=[-8,0,0,-7,-4,0,-3,-2,-6,-5,-9]
-        for i in range(62,40,-2):
-            self.buttons[int(i/7)][i%7].setText(name[10-int((i-42)/2)])
-            self.buttons[int(i/7)][i%7].setStyleSheet("background-color: #82e571;font-size:40px;color:red")
-            self.status[int(i/7)][i%7]=order1[10-int((i-42)/2)]
-
+        for i in range(62,40,-1):
+            if i%2==0:
+                self.buttons[i%7][int(i/7)].setText(name[10-int((i-42)/2)])
+                self.status[i%7][int(i/7)]=order1[10-int((i-42)/2)]
+            self.buttons[i%7][int(i/7)].setStyleSheet("background-color: #82e571;font-size:40px;color:red")
+        self.buttons[3][8].setText('穴')
 
 
 
     def getButtonPosition(self,button):  #返回行列坐标
-        for i in range(9):
+        for i in range(7):
             if button in self.buttons[i]:
                 return i,self.buttons[i].index(button)
 
 
     def buttonClicked(self):  #点击事件
         button = self.sender()  # 获取点击的按钮
-
-
+        print(self.getButtonPosition(button))
+        print(button.text())
         row,col=self.getButtonPosition(button)
+        print(self.status[row][col])
         if not self.selectedButton:  # 如果没有选中的按钮
             if self.hasChessman(row,col):  # 如果该按钮上有棋子
                 self.selectedButton = button  # 选中该按钮
@@ -84,7 +87,7 @@ class ChessBoard(QWidget):
 
 
     def hasChessman(self, row, col):
-        return self.status[row][col] != 10 and self.status[row][col] != 0
+        return self.status[row][col] != 10 and self.status[row][col] != 0 #不是空地或陷阱
 
     def isValidMove(self, row, col):
         row0,col0=self.getButtonPosition(self.selectedButton)
@@ -105,29 +108,39 @@ class ChessBoard(QWidget):
                 else:
                     return False
         else:
+            #跳河特殊规则
             return False
 
 
     def moveChessman(self, row, col):
-        trap=[]
+        stat=10
         text=self.selectedButton.text()
         row0,col0=self.getButtonPosition(self.selectedButton)   #棋子原行列坐标
         print(text+" move to",row,col)
-        style=self.selectedButton.styleSheet()  #获取样式表
-        print(style)
-        style1=self.sender().styleSheet()
-        print(style1)
-        if self.status[row][col]==0:
-            self.status[row][col]=np.sign(self.status[row0][col0])  #用符号函数削到1
-        else:
-            self.status[row][col]=self.status[row0][col0] #移动状态
-        if abs(self.status[row0][col0])==1: #要从陷阱里出来
-            self.status[row0][col0]=0
-        self.status[row0][col0]=10
-        self.selectedButton.setText('') #移动文字
+        style=self.selectedButton.styleSheet()  #获取原样式表
+        style1=self.sender().styleSheet()  #获取目标样式表
+        if self.status[row][col]==0 or self.status[row][col]==1:  #进入陷阱或吃陷阱里的动物
+            stat=np.sign(self.status[row0][col0])  #棋子状态变为1
+            self.status[row0][col0]=10  #原棋子状态为10
+            self.selectedButton.setText('')
+        elif abs(self.status[row0][col0])==1:  #要从陷阱里出来
+            stat=self.levels[self.animals.index(text)]*self.status[row0][col0]
+            self.status[row0][col0]=0  #状态置为井
+            self.buttons[row0][col0].setText('井')
+            if col0 > 5:
+                self.buttons[row0][col0].setStyleSheet("background-color: #82e571;font-size:40px;color:red")
+            else :
+                self.buttons[row0][col0].setStyleSheet("background-color: #82e571;font-size:40px;color:blue")
+
+        else: # 正常走
+            stat=self.status[row0][col0]
+            self.status[row0][col0]=10
+            self.selectedButton.setText('')
+
+        self.status[row][col]=stat
         self.buttons[row][col].setText(text)
-        self.selectedButton.setStyleSheet(style1)#移动样式
-        self.sender().setStyleSheet(style)
+        self.buttons[row0][col0].setStyleSheet(style1)  #交换样式
+        self.buttons[row][col].setStyleSheet(style)
 
 
 
