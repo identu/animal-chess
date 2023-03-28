@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QPushButton
 from PyQt5.QtGui import QIcon
 import numpy as np
+import re
 #使用行列坐标,(3,4)代表第三行第四列
 
 class chessman:
@@ -13,9 +14,8 @@ class chessman:
 class ChessBoard(QWidget):
     buttons=[]  #存储按钮对象
     status=[]
-    animals=['象','狮','虎','豹','狗','狼','猫','鼠']
+    animals=['象','狮','虎','豹','狼','狗','猫','鼠']
     levels=[9,8,7,6,5,4,3,2]
-    relation=zip(animals,levels)
     selectedButton=None
 
     def __init__(self):
@@ -108,7 +108,7 @@ class ChessBoard(QWidget):
                 else:
                     return False
         else:
-            #跳河特殊规则
+            #跳河规则
             return False
 
 
@@ -139,8 +139,21 @@ class ChessBoard(QWidget):
 
         self.status[row][col]=stat
         self.buttons[row][col].setText(text)
-        self.buttons[row0][col0].setStyleSheet(style1)  #交换样式
-        self.buttons[row][col].setStyleSheet(style)
+        a=style.split(';')
+        b=style1.split(';')
+        str=a[0]
+        a[0]=b[0]
+        b[0]=str
+        style=";".join(b)
+        style1=";".join(a)
+#        for i in range(1,styles1.len):
+#            str += ";"
+#            str += styles1[i]
+#        styles[0]=styles1[0]
+#        styles1[0]=str
+        print(str)
+        self.buttons[row0][col0].setStyleSheet(style)  #交换样式
+        self.buttons[row][col].setStyleSheet(style1)
 
 
 
@@ -151,4 +164,3 @@ if __name__ == '__main__':
     board.show()
     board.setChessMan()
     sys.exit(app.exec_())
-
