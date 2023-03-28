@@ -44,7 +44,7 @@ class ChessBoard(QWidget):
                 button.clicked.connect(self.buttonClicked)
 
     def setChessMan(self): #摆棋子
-        name=['狮','井','井','虎','狗','井','猫','鼠','豹','狼','象']  #象狮虎豹狗狼猫鼠98765432 进入陷阱的棋子为1
+        name=['狮','阱','阱','虎','狗','阱','猫','鼠','豹','狼','象']  #象狮虎豹狗狼猫鼠98765432 进入陷阱的棋子为1
         order=[8, 0, 0, 7, 4, 0, 3, 2, 6, 5, 9]  #井0 空10
         for i in range(0,21,1):
             if i%2==0:
@@ -70,14 +70,11 @@ class ChessBoard(QWidget):
 
     def buttonClicked(self):  #点击事件
         button = self.sender()  # 获取点击的按钮
-        print(self.getButtonPosition(button))
-        print(button.text())
         row,col=self.getButtonPosition(button)
-        print(self.status[row][col])
         if not self.selectedButton:  # 如果没有选中的按钮
             if self.hasChessman(row,col):  # 如果该按钮上有棋子
                 self.selectedButton = button  # 选中该按钮
-                print('select',row,col)
+                print('select',row,col,self.status[row][col],button.text())
             else:
                 print('点击空')
         else:  # 如果已经选中了一个按钮
@@ -95,16 +92,19 @@ class ChessBoard(QWidget):
         c1=self.status[row0][col0]  #原棋子
         if c1==10 or c1==0:#空或井不能动
             return False
-        if row==row0 and abs(col-col0)==1 or col==col0 and abs(row-row0)==1:  #每次只能移动1格
-
+        if row==row0 and abs(col-col0)==1 or col==col0 and abs(row-row0)==1:  #每次只移动1格
+            #不能进入己方兽穴
+            if self.status[row0][col0]<0 and row == 3 and col == 8 or self.status[row0][col0]>0 and row == 3 and col == 0:
+                return False
             if self.status[row][col] == 10 and self.status[row0][col0] < 10:
                 return True
             else:
                 if c1*c2<=0:
-                    if abs(c1)==2 and abs(c2)==9:  #鼠吃象规则，首先判断
+                    if abs(c1)==2 and abs(c2)==9:  #鼠吃象规则
                         return True
                     if abs(c1)>=abs(c2) and not (abs(c1)==9 and abs(c2)==2):
                         return True
+                    return False
                 else:
                     return False
         else:
@@ -114,20 +114,25 @@ class ChessBoard(QWidget):
 
     def moveChessman(self, row, col):
         stat=10
+        in_trap=0
         text=self.selectedButton.text()
         row0,col0=self.getButtonPosition(self.selectedButton)   #棋子原行列坐标
         print(text+" move to",row,col)
         style=self.selectedButton.styleSheet()  #获取原样式表
         style1=self.sender().styleSheet()  #获取目标样式表
-        if self.status[row][col]==0 or self.status[row][col]==1:  #进入陷阱或吃陷阱里的动物
-            stat=np.sign(self.status[row0][col0])  #棋子状态变为1
+        if row==3 and col==1 or row==2 and col==0 or row==4 and col==0 or row==3 and col==7 or row==2 and col==8 or row==4 and col==8:  #进入陷阱或吃陷阱里的动物
+            if self.status[row0][col0]>0 and col > 4 or self.status[row0][col0]<0 and col < 4:
+                stat=np.sign(self.status[row0][col0])  #敌方棋子状态变为1
+            else:
+                stat=self.status[row0][col0]
             self.status[row0][col0]=10  #原棋子状态为10
             self.selectedButton.setText('')
-        elif abs(self.status[row0][col0])==1:  #要从陷阱里出来
-            stat=self.levels[self.animals.index(text)]*self.status[row0][col0]
-            self.status[row0][col0]=0  #状态置为井
-            self.buttons[row0][col0].setText('井')
-            if col0 > 5:
+        elif row0==3 and col0==1 or row0==2 and col0==0 or row0==4 and col0==0 or row0==3 and col0==7 or row0==2 and col0==8 or row0==4 and col0==8:  #要从陷阱里出来
+            in_trap=1
+            stat=self.levels[self.animals.index(text)]*np.sign(self.status[row0][col0])
+            self.status[row0][col0]=0  #状态置为阱
+            self.buttons[row0][col0].setText('阱')
+            if col0 == 7 or col0==8:
                 self.buttons[row0][col0].setStyleSheet("background-color: #82e571;font-size:40px;color:red")
             else :
                 self.buttons[row0][col0].setStyleSheet("background-color: #82e571;font-size:40px;color:blue")
@@ -146,13 +151,8 @@ class ChessBoard(QWidget):
         b[0]=str
         style=";".join(b)
         style1=";".join(a)
-#        for i in range(1,styles1.len):
-#            str += ";"
-#            str += styles1[i]
-#        styles[0]=styles1[0]
-#        styles1[0]=str
-        print(str)
-        self.buttons[row0][col0].setStyleSheet(style)  #交换样式
+        if in_trap==0:
+            self.buttons[row0][col0].setStyleSheet(style)  #交换样式
         self.buttons[row][col].setStyleSheet(style1)
 
 
