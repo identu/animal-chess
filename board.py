@@ -6,13 +6,6 @@ import numpy as np
 
 # 使用行列坐标,(3,4)代表第三行第四列
 
-class chessman:
-    def __init__(self, status, x, y):
-        self.status = status
-        self.x = x
-        self.y = y
-
-
 class ChessBoard(QWidget):
     buttons = []  # 存储按钮对象
     status = []
