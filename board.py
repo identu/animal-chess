@@ -43,6 +43,12 @@ class ChessBoard(QWidget):
         name = ['狮', '阱', '阱', '虎', '狗', '阱', '猫', '鼠', '豹', '狼', '象']  # 象狮虎豹狼狗猫鼠98765432 进入陷阱的棋子为1
         order = [8, 0, 0, 7, 4, 0, 3, 2, 6, 5, 9]  # 井0 空10
         for i in range(0, 21, 1):
+            self.buttons[i%7][int(i/7)].setText('')
+            self.status[i % 7][int(i / 7)] = 10
+        for i in range(62, 40, -1):
+            self.buttons[i%7][int(i/7)].setText('')
+            self.status[i % 7][int(i / 7)] = 10
+        for i in range(0, 21, 1):
             if i % 2 == 0:
                 self.buttons[i % 7][int(i / 7)].setText(name[int(i / 2)])
                 self.status[i % 7][int(i / 7)] = order[int(i / 2)]
@@ -185,6 +191,7 @@ class ChessBoard(QWidget):
     def win(self,winer):
         result = QMessageBox.information(self, '结束', winer+'方获胜！是否重开？', QMessageBox.Yes | QMessageBox.No)
         if result == QMessageBox.Yes:
+
             self.setChessMan()
         else:
             exit(0)
